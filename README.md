@@ -120,7 +120,7 @@ Run the public tests from the repository root:
 python -m pytest
 ```
 
-The public test suite passes in a fresh Python 3.11 environment (36/36 tests).
+The public test suite passes in the verified Python 3.11 clean-validation environment (38/38 tests).
 
 This validates the core code; reproducing the full training pipeline still requires external datasets and project-specific inputs.
 
