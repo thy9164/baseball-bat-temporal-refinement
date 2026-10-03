@@ -1,0 +1,3 @@
+pandas
+Pillow
+# FFmpeg with libx264 is an external executable; see docs/DEPENDENCIES.md.

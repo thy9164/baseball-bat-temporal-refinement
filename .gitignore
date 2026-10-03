@@ -1,0 +1,53 @@
+# Python caches and environments
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+*.log
+.env
+.env.*
+.venv/
+venv/
+env/
+
+# Private/generated data and experiment outputs
+data/
+runs/
+weights/
+checkpoints/
+*.pt
+*.pth
+*.npz
+ASSET_MANIFEST.json
+
+# Generated optical-flow material
+raft/inputs/
+raft/outputs/
+**/flow_outputs/
+**/generated_flow/
+*.npy
+
+# Private/local media (approved files under docs/demo_assets remain trackable)
+frames/
+videos/
+media/private/
+local_media/
+
+# Secrets and local configuration
+secrets/
+*.secret
+*.key
+.python-version
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+desktop.ini

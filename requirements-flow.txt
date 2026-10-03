@@ -1,0 +1,6 @@
+-r requirements.txt
+torchvision
+Pillow
+opencv-python
+pandas
+tqdm

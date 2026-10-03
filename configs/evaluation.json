@@ -1,0 +1,49 @@
+{
+  "protocol": "strict_clean_final_evaluation",
+  "source_provenance_commit": "53515e58d76d05d665195dbc8db430c6e994bc47",
+  "split_identifier": "my_split_v2",
+  "test_used_for_selection": false,
+  "population": {
+    "matched_frames": 840,
+    "valid_gt_frames": 874,
+    "test_swings": 15,
+    "primary_comparison": "same target-valid detector-matched rows"
+  },
+  "normalization": {
+    "name": "PCK-Swing",
+    "length": "maximum valid GT projected bat length within each swing",
+    "auc": "trapezoidal integral on alpha 0.000..0.100 step 0.001, divided by 0.10"
+  },
+  "common": {
+    "window_size": 31,
+    "stride": 5,
+    "include_first_window": true,
+    "overlap_aggregation": "mean",
+    "batch_size": 2048,
+    "image_width": 1920.0,
+    "image_height": 1080.0,
+    "model": "bigru",
+    "hidden_dim": 256,
+    "num_layers": 2,
+    "dropout": 0.15,
+    "device": "cuda"
+  },
+  "no_flow": {
+    "entry_point": "refinement/src/evaluate_temporal_refinement.py",
+    "details_csv": "<SELECTED_TEST_CSV>",
+    "checkpoint": "<NO_FLOW_BEST_CHECKPOINT>",
+    "input_dim": 25
+  },
+  "flow": {
+    "entry_point": "refinement/src/evaluate_temporal_refinement_flow.py",
+    "details_csv": "<ALIGNED_TEST_FLOW_CSV>",
+    "checkpoint": "<FLOW_BEST_CHECKPOINT>",
+    "input_dim": 45,
+    "use_flow_features": true,
+    "flow_clip_px": 50.0
+  },
+  "outputs": {
+    "metrics_json": "<OUTPUT_METRICS_JSON>",
+    "predictions_csv": "<PRIVATE_OUTPUT_PREDICTIONS_CSV>"
+  }
+}

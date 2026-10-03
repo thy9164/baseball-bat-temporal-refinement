@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "source_provenance_commit": "53515e58d76d05d665195dbc8db430c6e994bc47",
+  "evaluation": {
+    "split_identifier": "my_split_v2",
+    "test_swings": 15,
+    "seed_count": 1,
+    "matched_frames": 840,
+    "valid_gt_frames": 874,
+    "population_note": "Primary metrics compare the same target-valid detector-matched frames; they do not measure detector coverage.",
+    "statistical_significance_claimed": false,
+    "pck_normalization": "error divided by each swing maximum valid projected GT bat length",
+    "pck_auc_definition": "trapezoidal integral on alpha 0.000..0.100 step 0.001 divided by 0.10"
+  },
+  "pipelines": {
+    "selected_detector": {
+      "label": "Frame-wise detector after deterministic candidate selection",
+      "rmse_px": 19.955548393355855,
+      "mean_error_px": 11.589857067417247,
+      "median_error_px": 6.093988960249543,
+      "p90_error_px": 29.290024395880366,
+      "pck_swing_0_025": 0.6726190476190477,
+      "pck_swing_0_05": 0.8261904761904761,
+      "pck_auc_0_0_10": 0.7250119047619048,
+      "n": 840
+    },
+    "strict_clean_no_flow": {
+      "label": "Strict-clean temporal refinement, no flow",
+      "rmse_px": 17.278228989070506,
+      "mean_error_px": 10.713859213597546,
+      "median_error_px": 5.820906498013305,
+      "p90_error_px": 26.670919108614648,
+      "pck_swing_0_025": 0.6833333333333333,
+      "pck_swing_0_05": 0.8333333333333334,
+      "pck_auc_0_0_10": 0.7346428571428572,
+      "n": 840
+    },
+    "strict_clean_flow": {
+      "label": "Strict-clean temporal refinement with RAFT20",
+      "rmse_px": 17.177222804220357,
+      "mean_error_px": 10.68364936730763,
+      "median_error_px": 5.951019207525414,
+      "p90_error_px": 26.50313085899375,
+      "pck_swing_0_025": 0.6845238095238095,
+      "pck_swing_0_05": 0.8333333333333334,
+      "pck_auc_0_0_10": 0.7350178571428571,
+      "n": 840
+    }
+  },
+  "reported_changes": {
+    "no_flow_vs_selected_detector": {
+      "rmse_relative_percent": -13.42,
+      "mean_error_relative_percent": -7.56,
+      "p90_relative_percent": -8.94,
+      "pck_0_025_percentage_points": 1.07,
+      "pck_0_05_percentage_points": 0.71
+    },
+    "flow_vs_no_flow": {
+      "rmse_relative_percent": -0.58,
+      "pck_0_025_percentage_points": 0.12,
+      "pck_0_05_percentage_points": 0.0
+    }
+  },
+  "interpretation": "Temporal refinement primarily reduced severe outliers; acceptable-prediction rates improved modestly. RAFT20 added little incremental accuracy. Already-good detector predictions could worsen."
+}
