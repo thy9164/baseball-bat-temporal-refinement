@@ -715,8 +715,39 @@ def process_file(c3d_path, args, rng):
 def write_single_csv(c3d_files, args, rng):
     if args.split_by_folder:
         write_split_by_folder(c3d_files, args, rng)
-    else:
-        write_single_csv(c3d_files, args, rng)
+        return
+
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fp = None
+    writer = None
+    processed = total_rows = skipped = 0
+    try:
+        for c3d_path in c3d_files:
+            try:
+                rows = process_file(c3d_path, args, rng)
+            except Exception as exc:
+                skipped += 1
+                print(f"[skip] {c3d_path}: {exc}")
+                continue
+            if not rows:
+                skipped += 1
+                continue
+            if writer is None:
+                fp = open(out_path, "a" if args.append else "w", newline="", encoding="utf-8")
+                writer = csv.DictWriter(fp, fieldnames=list(rows[0].keys()))
+                if not args.append:
+                    writer.writeheader()
+            writer.writerows(rows)
+            processed += 1
+            total_rows += len(rows)
+    finally:
+        if fp is not None:
+            fp.close()
+    print(f"saved_csv: {out_path}")
+    print(f"processed_files: {processed}")
+    print(f"skipped_files: {skipped}")
+    print(f"rows: {total_rows}")
 
 
 def write_split_by_folder(c3d_files, args, rng):

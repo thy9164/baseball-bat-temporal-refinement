@@ -6,7 +6,7 @@ This repository exposes the clean-input implementation and frozen protocol recor
 
 Public code can:
 
-- export deterministic detector candidates from Ultralytics pose text outputs;
+- select deterministic detector candidates from Ultralytics pose text outputs and export evaluation rows when annotations are supplied;
 - project OBP C3D bat markers into synthetic 2D trajectories;
 - build strict-clean synthetic windows;
 - train clean25 and clean45 temporal refiners;
@@ -34,7 +34,7 @@ Install the smallest relevant group described in [DEPENDENCIES.md](DEPENDENCIES.
 2. Generate 2D trajectories with `refinement/synthetic_data_by_c3d/generate_bat_2d_coordinates.py`.
 3. Build synthetic clean25 windows with `refinement/src/build_synthetic_pretraining_dataset.py` and explicit input, output, and split paths.
 4. Generate detector predictions for the real data. Use swing-disjoint folds so training CSV rows are out-of-fold detector predictions.
-5. Export deterministic selected candidates with `yolo/export_detector_evaluation_rows.py`. Ground truth is joined after selection for supervised training/evaluation rows.
+5. Export deterministic selected candidates with `yolo/export_detector_evaluation_rows.py`. The exporter limits its evaluation population to frames with matching annotations, but the selector itself receives only inference-time detector fields. Ground truth is reattached after candidate selection for supervised training/evaluation rows.
 6. For flow, run the scripts in `raft/scripts/`, merge flow statistics, and validate deterministic selected/flow alignment with `refinement/src/verify_selected_flow_alignment.py`.
 
 Representative detector export interface:
@@ -47,7 +47,7 @@ python yolo/export_detector_evaluation_rows.py \
   --output <SELECTED_DETAILS_CSV>
 ```
 
-All material input/output paths are explicit. Omitting prediction directories, GT CSV, output path, trainer output directory, synthetic output NPZ, or synthetic split JSON fails instead of silently using historical `runs/` or `data/` locations.
+Training, evaluation, detector-export, and RAFT stages use explicit material input/output paths. Omitting prediction directories, GT CSV, output path, trainer output directory, synthetic output NPZ, or synthetic split JSON fails instead of silently using historical `runs/` or `data/` locations.
 
 The optional flow path is staged rather than a single command: `extract_raft_flow.py` writes pairwise flow files, `extract_local_flow_features.py` and `extract_global_flow_features.py` summarize them, and `merge_yolo_eval_with_flow_features.py` combines those summaries with selected detector rows. Run `verify_selected_flow_alignment.py` before training. Every stage requires explicit input/output locations.
 
@@ -55,7 +55,7 @@ The optional flow path is staged rather than a single command: `extract_raft_flo
 
 ### Strict-clean synthetic pretraining
 
-Use `configs/synthetic_pretraining.json` with:
+Follow the settings recorded in `configs/synthetic_pretraining.json` with:
 
 - clean25 schema;
 - 31-frame windows, stride 5, include-first behavior;
@@ -67,15 +67,15 @@ The exact historical virtual-camera invocation was not preserved in the frozen t
 
 ### Real no-flow fine-tuning
 
-Use `configs/real_finetuning_no_flow.json`. The frozen protocol starts from the strict-clean synthetic epoch-487 checkpoint, uses selected `my_split_v2` train/validation rows, clean25 input, 31-frame windows, batch 16, AdamW at `2e-6`, no scheduler, patience 20, and selects the minimum validation total loss. The test split is evaluation-only.
+Follow the settings recorded in `configs/real_finetuning_no_flow.json`. The frozen protocol starts from the strict-clean synthetic epoch-487 checkpoint, uses selected `my_split_v2` train/validation rows, clean25 input, 31-frame windows, batch 16, AdamW at `2e-6`, no scheduler, patience 20, and selects the minimum validation total loss. The test split is evaluation-only.
 
 ### Real flow fine-tuning
 
-Use `configs/real_finetuning_flow.json`. It keeps the no-flow recipe and adds the verified clean25-to-clean45 expansion plus aligned RAFT20 features clipped/normalized at 50 px. Selected and flow CSV frame keys and echoed detector coordinates/confidences/bboxes must match exactly; mismatches fail rather than being inner-joined away.
+Follow the settings recorded in `configs/real_finetuning_flow.json`. It keeps the no-flow recipe and adds the verified clean25-to-clean45 expansion plus aligned RAFT20 features clipped/normalized at 50 px. Selected and flow CSV frame keys and echoed detector coordinates/confidences/bboxes must match exactly; mismatches fail rather than being inner-joined away.
 
 ### Evaluation
 
-Use `configs/evaluation.json` with one frozen best checkpoint. The primary comparison is the same 840 target-valid detector-matched frames. PCK-Swing divides endpoint error by each swing's maximum valid projected GT bat length. The test split must not be used for checkpoint selection or tuning.
+Evaluate each pipeline with its frozen best checkpoint using the settings recorded in `configs/evaluation.json`. The primary comparison is the same 840 target-valid detector-matched frames. PCK-Swing divides endpoint error by each swing's maximum valid projected GT bat length. The test split must not be used for checkpoint selection or tuning.
 
 ## Input and output paths
 

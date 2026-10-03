@@ -42,8 +42,24 @@
     "prediction_interpolation": false,
     "display_smoothing": false,
     "hand_edited_points": false,
-    "encoding": "CPU libx264; no hardware encoder or GPU workload",
-    "font_policy": "Optional DEMO_FONT_* override, then common system sans-serif fonts, then DejaVu Sans, then Pillow default; no font file is bundled."
+    "encoding": "MP4: CPU libx264; GIF: FFmpeg palettegen/paletteuse; no hardware encoder or GPU workload.",
+    "font_policy": "Optional DEMO_FONT_* override, then common system sans-serif fonts, then DejaVu Sans, then Pillow default; no font file is bundled.",
+    "inline_gif": {
+      "source_asset": "swing074_detector_vs_temporal.mp4",
+      "swing_id": "swing_074",
+      "first_frame": 18,
+      "last_frame": 30,
+      "total_frames": 13,
+      "playback_fps": 6,
+      "nominal_duration_seconds": 2.1666666666666665,
+      "width_px": 960,
+      "preserve_aspect_ratio": true,
+      "scaling": "lanczos",
+      "palette_max_colors": 128,
+      "dithering": "sierra2_4a",
+      "loop": "infinite",
+      "timing_note": "GIF delays use centiseconds; 6 fps is presentation timing, not capture speed or inference throughput."
+    }
   },
   "public_boundary": "Frozen qualitative examples and counterexample; none replaces complete 15-swing test-set performance.",
   "model_operations": "No training, inference, checkpoint selection, prediction regeneration, or metric recomputation.",
@@ -57,6 +73,11 @@
       "path": "swing074_detector_vs_temporal.mp4",
       "bytes": 898847,
       "sha256": "28ec8a0843b99a55185d41a2ebf385831925352b8f814500538300017a2e0e2e"
+    },
+    {
+      "path": "swing074_detector_vs_temporal.gif",
+      "bytes": 2258964,
+      "sha256": "132a73ff8b081f10dcf49470e39b3b8001350c2c9755a1e237598fdbbd527d5a"
     },
     {
       "path": "swing074_full_swing_comparison.mp4",

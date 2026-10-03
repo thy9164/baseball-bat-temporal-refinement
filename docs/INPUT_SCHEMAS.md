@@ -23,7 +23,7 @@ Evidence: `yolo/candidate_selection.py`,
   convention. Projection depth and 3D coordinates are separate metadata.
 - Real frames are identified by `(swing_id, image_stem)`; `frame` is accepted as
   a fallback. Numeric ordering currently extracts the last six digits.
-- A detector point exists only when `x`, `y`, and confidence are finite and
+- Clean observation validity requires `x`, `y`, and confidence to be finite and
   confidence is greater than zero. Missing coordinates are empty or non-finite;
   confidence is treated as zero. Canonical filling occurs only after this
   detector-derived validity decision, and the missing mask is retained.
@@ -54,6 +54,11 @@ It rejects top-level GT/error/status fields. The following are forbidden:
 `gt_head`, `gt_tail`, `gt_x`, `gt_y`, `visibility`, `status`, `error_px`, and
 `detector_error`.
 
+Candidate-selection eligibility requires both head and tail confidence to be
+at least 0.1 in `candidate_selection.py`. This is separate from the clean
+observation builder's per-point validity rule: finite x/y/confidence and
+confidence strictly greater than zero. These thresholds are not interchangeable.
+
 The exporter may join annotations only after selection to construct evaluation
 rows. Current export discovery skips detector frames that lack a matching GT row
 before forming its evaluation population; this is an evaluation-export boundary,
@@ -78,7 +83,7 @@ fields, but `build_observation_features` receives only the inference subset.
 | `detection_rank`, `bbox_conf` | optional for clean builder | Selected-candidate provenance | INFERENCE INPUT metadata |
 | `view`, `batter_side` | optional in this CSV when supplied by clip metadata | View/hand metadata used to derive canonical view and horizontal flip | INFERENCE INPUT metadata |
 | `gt_x`, `gt_y` | required for supervised train/evaluation | Pixel annotation | SUPERVISION |
-| `visibility` | required by current loss/grouping path; defaults historically | `fully_visible`, `partially_occluded`, `fully_occluded`, `ignore` | SUPERVISION / EVALUATION ONLY |
+| `visibility` | expected for faithful supervised training/evaluation; the current loader falls back to fully_visible when missing or unrecognized | `fully_visible`, `partially_occluded`, `fully_occluded`, `ignore` | SUPERVISION / EVALUATION ONLY |
 | `status` | optional for canonical observation; retained in records | Evaluation status such as `matched` or `missing_prediction` | EVALUATION ONLY |
 | `dx`, `dy`, `error_px` | not required by clean builder | Detector-versus-GT diagnostics | EVALUATION ONLY |
 
@@ -122,8 +127,9 @@ Required RAFT20 source order:
 19. `global_flow_mag_mean`
 20. `global_flow_mag_p95`
 
-The first four fields are binary inference-valid flags. Remaining values are
-pixel displacement/statistics from RAFT and detector-defined regions. Canonical
+The first four fields are binary inference-valid flags. The next 12 fields are
+local flow statistics for detector-defined head, tail, and bbox regions (four
+statistics per region). The final four fields summarize global flow. Canonical
 normalization clips signed `x/y` components to `[-flow_clip_px,+flow_clip_px]`,
 clips magnitudes to `[0,flow_clip_px]`, and divides by `flow_clip_px` (50 px in
 the frozen protocol). Missing/non-numeric flow values currently default to zero.
@@ -137,7 +143,7 @@ preserved. The CSV alignment requirements and RAFT20 schema above still apply.
 
 ## D. OBP projected 2D trajectory CSV
 
-The projection generator writes one row per projected frame and camera view.
+The projection generator writes one row per projected frame, camera view, and mirror variant when horizontal mirroring is enabled.
 The strict-clean synthetic builder accepts either `head_u/head_v/tail_u/tail_v`
 or the legacy alias `head_x/head_y/tail_x/tail_y`.
 
@@ -181,7 +187,7 @@ Reproducers must supply and record these settings when clip metadata is absent.
 
 ### Annotation-compatible frame data
 
-Required for supervised training/evaluation: `swing_id`, frame identifier,
+For faithful supervised training/evaluation, provide `swing_id`, frame identifier,
 head/tail pixel GT coordinates, and head/tail visibility labels. Optional
 evaluation fields include `status`, `dx`, `dy`, and `error_px`. `ignore` affects
 only supervision validity and metric grouping.

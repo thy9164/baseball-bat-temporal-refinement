@@ -9,7 +9,7 @@ This inventory is derived from the imports, subprocess calls, and command-line e
 | A. Core temporal refinement | Python, NumPy, PyTorch | clean observations, clean25/clean45 schemas, BiGRU training/evaluation, checkpoint contracts |
 | B. Synthetic OBP preprocessing | core + OpenCV, ezc3d | C3D reading, 3D-to-2D projection, preview generation, synthetic-window construction |
 | C. RAFT / flow path | core + Torchvision, Pillow, OpenCV, pandas, tqdm | pretrained RAFT execution, flow serialization, regional summaries, CSV merge/alignment |
-| D. Demo rendering | pandas, Pillow, external FFmpeg with `libx264` | deterministic PNG/frame rendering and CPU MP4 encoding |
+| D. Demo rendering | pandas, Pillow, external FFmpeg with `libx264` | deterministic PNG/GIF/MP4 rendering; FFmpeg is used for GIF and MP4 generation, with libx264 required for MP4 encoding |
 | E. Test / development | core + pytest | public test discovery and execution; tests use `unittest` assertions |
 | F. Standard library | `argparse`, `collections`, `copy`, `csv`, `dataclasses`, `functools`, `glob`, `hashlib`, `json`, `math`, `os`, `pathlib`, `random`, `re`, `subprocess`, `sys`, `tempfile`, `types`, `unittest` | CLI, data I/O, hashing, process control, and tests |
 
@@ -20,7 +20,7 @@ This inventory is derived from the imports, subprocess calls, and command-line e
 | Core | `requirements.txt` | `numpy`, `torch` | clean25/clean45 feature construction, BiGRU models, training, evaluation, checkpoint contracts |
 | Synthetic / OBP | `requirements-synthetic.txt` | core + `opencv-python`, `ezc3d` | C3D reading, 3D-to-2D projection, optional preview rendering, synthetic dataset construction |
 | RAFT | `requirements-flow.txt` | core + `torchvision`, `Pillow`, `opencv-python`, `pandas`, `tqdm` | torchvision RAFT inference, flow image I/O, feature extraction and CSV joins |
-| Demo | `requirements-demo.txt` | `pandas`, `Pillow` | deterministic still/video frame rendering; also requires an external FFmpeg executable with `libx264` |
+| Demo | `requirements-demo.txt` | `pandas`, `Pillow` | deterministic still/GIF/video rendering; FFmpeg handles GIF/MP4 generation, with libx264 required for MP4 |
 | Development / tests | `requirements-dev.txt` | core + `pytest` | run the complete public test suite; tests themselves use `unittest` and are pytest-discoverable |
 
 Install only the groups required for the intended task, for example:
@@ -37,7 +37,7 @@ python -m pip install -r requirements-dev.txt
 
 ## Specification choice
 
-This is a scripts-oriented research repository rather than an installable Python package. Use the small, task-specific requirement files above. A fresh Python 3.11 environment passed all 36 public tests; this does not establish minimum supported versions or validate all optional dependency groups.
+This is a scripts-oriented research repository rather than an installable Python package. Use the small, task-specific requirement files above. The existing isolated Python 3.11 clean-validation environment passed all 38 current public tests; this does not establish minimum supported versions or validate all optional dependency groups.
 
 ## Package-level evidence
 
@@ -68,6 +68,9 @@ Read-only inspection of the surviving local environments found:
 | Frozen training environment | 3.14.2 | numpy 2.4.4; torch 2.9.1+cu128; torchvision 0.24.1+cu128; Pillow 12.2.0; opencv-python 4.13.0.92 |
 | Historical RAFT environment | 3.11.0 | numpy 2.4.4; torch 2.11.0+cu128; torchvision 0.26.0+cu128; pandas 3.0.3; Pillow 12.2.0; opencv-python 4.13.0.92; tqdm 4.68.1 |
 | Historical OBP environment | 3.14.2 | numpy 2.4.4; torch 2.9.1+cu128; torchvision 0.24.1+cu128; pandas 3.0.3; Pillow 12.2.0; opencv-python 4.13.0.92; tqdm 4.68.1; ezc3d 1.7.0 |
+| Public clean-validation environment (compatibility evidence) | 3.11.0 | NumPy 2.4.6; PyTorch 2.14.1+cpu; pytest 9.1.1; current 38/38 public tests passed |
+
+The public clean-validation versions were verified directly from the existing isolated environment, and the current 38-test suite was rerun successfully in that environment. This is compatibility evidence, separate from frozen-training provenance; it does not reproduce the private-data experiments or validate all optional dependency groups.
 
 The historical environments were not jointly resolved from a lockfile, so these exact combinations should not be interpreted as tested cross-platform constraints.
 

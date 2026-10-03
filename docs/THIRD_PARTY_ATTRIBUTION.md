@@ -26,7 +26,7 @@ RAFT execution may download pretrained weights. Package-source licenses should n
 
 The detector exporter parses externally generated YOLO pose text outputs. This repository does not include or import Ultralytics implementation code, distribute YOLO weights, or run the detector itself.
 
-[Ultralytics licensing](https://www.ultralytics.com/license) describes AGPL-3.0 and Enterprise options for its code/models and workflows. Parsing an external output format alone does not establish that this repository inherits AGPL. Users generating detector outputs should review the terms applicable to their separate detector workflow.
+[Ultralytics licensing](https://www.ultralytics.com/license) describes AGPL-3.0 and Enterprise options for its code/models and workflows. This repository only parses exported pose text files and does not bundle or invoke Ultralytics code or models. Licensing obligations for generating those outputs belong to the separate Ultralytics workflow and should be evaluated under the terms applicable to that workflow.
 
 ## FFmpeg / libx264
 
@@ -52,6 +52,6 @@ No dependency license is presented as a repository-wide software license.
 
 ## Included and excluded materials
 
-The four public demo assets use self-recorded footage with the recorded person's consent. They are frozen qualitative examples, not replacements for aggregate test-set results.
+The five public demo assets use self-recorded footage with the recorded person's consent. They are frozen qualitative examples, not replacements for aggregate test-set results.
 
 Web-sourced footage, raw extracted frames, private annotations, detector/flow exports, per-frame predictions, OBP original/derived datasets, run directories, checkpoints, model weights, and third-party binaries are not distributed.

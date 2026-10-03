@@ -2,7 +2,7 @@
 
 ## Problem and evaluation unit
 
-The project estimates ordered baseball-bat head and tail keypoints from video. A frame-wise pose detector supplies candidate endpoints and confidence values. A deterministic selector chooses among multiple detections using detector confidence plus inference-available temporal/geometric consistency. Ground-truth coordinates, visibility/status labels, and detector error are excluded from selection and model input.
+The project estimates baseball-bat head and tail keypoints from video. A frame-wise pose detector supplies candidate endpoints and confidence values. A deterministic selector chooses among multiple detections using detector confidence plus inference-available temporal/geometric consistency. Ground-truth coordinates, visibility/status labels, and detector error are excluded from selection and model input.
 
 The final evaluation focuses on tail localization. Its primary population is the same 840 target-valid frames for which the selected detector, no-flow refiner, and flow refiner all have comparable predictions. This isolates localization quality; it is not a detector-coverage metric.
 
@@ -17,7 +17,7 @@ The clean25 schema contains:
 - normalized window time;
 - five view indicators.
 
-The clean45 flow schema appends 20 RAFT summary features in the exact order enforced by `refinement/clean_input/schema.py`. Flow regions are centered/defined by detector predictions and detector bounding boxes. Signed components and magnitudes are clipped and normalized with the frozen 50 px scale. See [INPUT_SCHEMAS.md](INPUT_SCHEMAS.md) for field contracts.
+The clean45 flow schema appends 20 RAFT features in the exact order enforced by `refinement/clean_input/schema.py`: four validity flags, 12 local head/tail/bbox flow statistics, and four global flow statistics. Local regions are defined by detector predictions and bounding boxes. Signed components and magnitudes are clipped and normalized with the frozen 50 px scale. See [INPUT_SCHEMAS.md](INPUT_SCHEMAS.md) for field contracts.
 
 ## Temporal model
 
@@ -31,11 +31,11 @@ Strict-clean synthetic pretraining uses projected OBP bat trajectories corrupted
 
 Real fine-tuning starts from the strict-clean synthetic checkpoint and uses selected detector observations. Train, validation, and test swings are disjoint under `my_split_v2`. Training detector rows are generated out of fold. Validation total loss selects the checkpoint; test data does not participate in selection.
 
-The loss combines endpoint localization with prior, correction, trust, direction, velocity, acceleration, line, endpoint, bat-length, and detector-quality terms. These are structured exploratory objectives; the final results do not establish that every term independently improves performance.
+The loss implementation provides final-position, prior, correction/prior-guidance, trust, bat-length and direction, velocity/acceleration, line/end, observation-consistency, detector-quality, and damage-control terms across synthetic pretraining and real fine-tuning. Active weights differ by stage; not every term has a nonzero weight in every stage. For example, the frozen synthetic recipe disables good-detector damage loss, while the real fine-tuning recipe enables it and disables observation-consistency loss. These are structured exploratory objectives; individual terms were not independently proven beneficial by ablation.
 
 ## Flow ablation
 
-The flow model holds the architecture and real-data recipe fixed while expanding clean25 to clean45. The first-layer weights for the original 25 inputs are copied from the strict-clean synthetic parent; 20 new flow columns start at zero. Recurrent/deeper/output weights remain unchanged. This provides a controlled test of RAFT20 information without using legacy oracle-trained checkpoints.
+The flow model holds the architecture and real-data recipe fixed while expanding clean25 to clean45. The first-layer weights for the original 25 inputs are copied from the strict-clean synthetic parent; 20 new flow columns start at zero. At initialization, the recurrent, deeper, and output weights are copied unchanged from the parent model. This provides a controlled test of RAFT20 information without using legacy oracle-trained checkpoints.
 
 ## Metrics
 
@@ -45,4 +45,4 @@ The aggregate frozen values are stored in `results/final_metrics.json`. The cont
 
 ## Interpretation boundary
 
-The no-flow model reduces severe outliers and RMSE more than it changes PCK. It can make already-good detector estimates worse. The most defensible description is a temporal outlier corrector, not a universal accuracy booster or an occlusion-specific solution. RAFT20 adds little incremental accuracy over the matched no-flow model.
+The no-flow model reduces severe outliers and RMSE more than it changes PCK. It can make already-good detector estimates worse. Overall, the model behaves mainly as a temporal outlier corrector rather than a universal accuracy booster or an occlusion-specific solution. RAFT20 adds little incremental accuracy over the matched no-flow model.

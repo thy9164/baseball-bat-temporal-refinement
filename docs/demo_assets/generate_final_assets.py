@@ -234,6 +234,35 @@ def render_video(
         )
 
 
+def render_gif(ffmpeg: Path, source_mp4: Path, output_path: Path) -> None:
+    """Encode the inline preview from the short MP4 without redrawing frames."""
+    subprocess.run(
+        [
+            str(ffmpeg), "-hide_banner", "-loglevel", "error", "-y",
+            "-filter_complex_threads", "1", "-i", str(source_mp4),
+            "-filter_complex",
+            "fps=6,scale=960:-1:flags=lanczos,split[frames][palette_input];"
+            "[palette_input]palettegen=max_colors=128[palette];"
+            "[frames][palette]paletteuse=dither=sierra2_4a",
+            "-loop", "0", str(output_path),
+        ],
+        check=True,
+    )
+
+
+def gif_policy() -> dict[str, object]:
+    return {
+        "source_asset": "swing074_detector_vs_temporal.mp4",
+        "swing_id": "swing_074", "first_frame": 18, "last_frame": 30,
+        "total_frames": 13, "playback_fps": 6,
+        "nominal_duration_seconds": 13 / 6,
+        "width_px": 960, "preserve_aspect_ratio": True,
+        "scaling": "lanczos", "palette_max_colors": 128,
+        "dithering": "sierra2_4a", "loop": "infinite",
+        "timing_note": "GIF delays use centiseconds; 6 fps is presentation timing, not capture speed or inference throughput.",
+    }
+
+
 def asset_record(path: Path) -> dict[str, object]:
     return {"path": path.name, "bytes": path.stat().st_size, "sha256": sha256(path)}
 
@@ -243,7 +272,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--predictions", type=Path, required=True, help="Frozen formal prediction CSV.")
     parser.add_argument("--selected-csv", type=Path, required=True, help="Selected-detector CSV used for provenance hashing.")
     parser.add_argument("--frames-root", type=Path, required=True, help="Rights-cleared source-frame root containing swing directories.")
-    parser.add_argument("--output-dir", type=Path, required=True, help="Directory for the four assets and manifests.")
+    parser.add_argument("--output-dir", type=Path, required=True, help="Directory for the five assets and manifests.")
     parser.add_argument("--ffmpeg", type=Path, required=True, help="FFmpeg executable with the CPU libx264 encoder.")
     parser.add_argument(
         "--write-private-manifest",
@@ -280,6 +309,7 @@ def main() -> None:
     limitation.save(output / "swing076_limitation.png", optimize=True)
 
     render_video(args.ffmpeg, output / "swing074_detector_vs_temporal.mp4", predictions, frames_root, crop_074, SHORT_FRAMES, 6)
+    render_gif(args.ffmpeg, output / "swing074_detector_vs_temporal.mp4", output / "swing074_detector_vs_temporal.gif")
     render_video(args.ffmpeg, output / "swing074_full_swing_comparison.mp4", predictions, frames_root, crop_074, FULL_FRAMES, 8)
 
     source_frames = [frames_root / f"swing_074/{frame:06d}.jpg" for frame in FULL_FRAMES]
@@ -287,6 +317,7 @@ def main() -> None:
     assets = [
         output / "swing074_hero.png",
         output / "swing074_detector_vs_temporal.mp4",
+        output / "swing074_detector_vs_temporal.gif",
         output / "swing074_full_swing_comparison.mp4",
         output / "swing076_limitation.png",
     ]
@@ -303,11 +334,12 @@ def main() -> None:
             "flow_included": False,
             "bat_axes": "faint two-pixel reference lines",
             "focused_short_video": {"swing_id": "swing_074", "first_frame": 18, "last_frame": 30, "total_frames": 13, "playback_fps": 6, "duration_seconds": 13 / 6},
+            "inline_gif": gif_policy(),
             "full_swing_video": {"swing_id": "swing_074", "first_frame": 1, "last_frame": 63, "total_frames": 63, "playback_fps": 8, "duration_seconds": 7.875},
             "prediction_interpolation": False,
             "display_smoothing": False,
             "hand_edited_points": False,
-            "encoding": "CPU libx264; no hardware encoder or GPU workload",
+            "encoding": "MP4: CPU libx264; GIF: FFmpeg palettegen/paletteuse; no hardware encoder or GPU workload.",
             "font_policy": "Optional DEMO_FONT_* override, then common system sans-serif fonts, then DejaVu Sans, then Pillow default; no font file is bundled.",
         },
         "public_boundary": "Frozen qualitative examples and counterexample; none replaces complete 15-swing test-set performance.",

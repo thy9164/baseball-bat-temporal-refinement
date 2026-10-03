@@ -77,9 +77,13 @@ The runs use **one seed**; no statistical significance is claimed. Aggregate val
 
 ### Improvement
 
-The example above shows `swing_074`, frame 23: tail error decreases from **13.1 px → 3.2 px** with no-flow refinement.
+![Frame-wise selected detector versus no-flow temporal refinement](docs/demo_assets/swing074_detector_vs_temporal.gif)
 
-- [Short comparison video](docs/demo_assets/swing074_detector_vs_temporal.mp4): frames 18–30, focused on the representative segment.
+The animation covers frames 18–30, comparing the frame-wise selected detector with no-flow temporal refinement.
+
+The example image at the top shows `swing_074`, frame 23: tail error decreases from **13.1 px → 3.2 px** with no-flow refinement.
+
+- [Higher-quality short MP4](docs/demo_assets/swing074_detector_vs_temporal.mp4): frames 18–30, focused on the representative segment.
 - [Full-swing comparison video](docs/demo_assets/swing074_full_swing_comparison.mp4): frames 1–63, showing the complete motion.
 
 Both use the same fixed crop and saved predictions. Playback speed is chosen for presentation; it is not capture speed or inference throughput.
