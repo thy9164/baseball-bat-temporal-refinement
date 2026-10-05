@@ -13,7 +13,7 @@ Temporal refinement mainly reduced large detector errors, while threshold-based 
 ## Method Overview
 
 ```mermaid
-flowchart LR
+flowchart TB
     V[Video frames] --> D[YOLOv8s-pose]
     D --> S[Candidate selection]
     S --> O[Detector-based temporal features]
@@ -55,15 +55,13 @@ The original source videos, private annotations, detector/flow exports, OBP C3D 
 
 The table compares tail localization on the same 840 test frames where valid ground truth and detector predictions were available. The baseline is the frame-wise detector **after deterministic candidate selection**, rather than raw YOLO rank-1 output.
 
-The table uses the same 840 frames for all three methods so that their localization errors can be compared directly.
-
 Metrics:
-RMSE, mean, median, and P90 measure tail error in pixels; lower is better. PCK measures how often tail error stays within a fraction of each swing’s reference bat length—5% for PCK@5 and 2.5% for PCK@2.5. AUC summarizes PCK across thresholds from 0% to 10%; higher is better.
+RMSE, mean, median, and P90 measure tail error in pixels; lower is better. PCK measures how often tail error stays within 5% (PCK@5) or 2.5% (PCK@2.5) of the maximum ground-truth bat length in each swing. AUC summarizes PCK across thresholds from 0% to 10%; higher is better.
 
 | Pipeline | RMSE ↓ | Mean error ↓ | Median ↓ | P90 ↓ | PCK@2.5 ↑ | PCK@5 ↑ | AUC [0, 10%] ↑ |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Frame-wise detector after deterministic candidate selection | 19.956 px | 11.590 px | 6.094 px | 29.290 px | 67.26% | 82.62% | 0.7250 |
-| Temporal refinement, no optical flow | **17.278 px** | **10.714 px** | **5.821 px** | **26.671 px** | 68.33% | **83.33%** | 0.7346 |
+| Temporal refinement, no optical flow | 17.278 px | 10.714 px | **5.821 px** | 26.671 px | 68.33% | **83.33%** | 0.7346 |
 | Temporal refinement + RAFT optical flow | **17.177 px** | **10.684 px** | 5.951 px | **26.503 px** | **68.45%** | **83.33%** | **0.7350** |
 
 No-flow refinement reduced RMSE by **13.42%**, mean error by **7.56%**, and P90 by **8.94%**. PCK gains were smaller: +1.07 percentage points at 2.5% and +0.71 at 5%.
@@ -110,7 +108,7 @@ The core implementation has been validated with the included tests:
 python -m pip install -r requirements-dev.txt
 python -m pytest
 ```
-The current public suite passes 38/38 tests in the verified Python 3.11 environment.
+The current test suite passes 38/38 tests in the verified Python 3.11 environment.
 Optional dependencies for synthetic preprocessing, optical flow, and demo rendering are documented in [Dependencies](docs/DEPENDENCIES.md).
 
 ## Limitations
