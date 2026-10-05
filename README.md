@@ -4,7 +4,7 @@
 
 Locating the head and tail of a fast-moving bat is a difficult part of baseball swing analysis. A frame-wise detector works well on many frames, but occasional misses and large endpoint errors make the trajectory unreliable.
 
-The original two-person course project focused on bat endpoint localization, especially the tail, under occlusion and unstable detections. Early work explored temporal information, optical flow, occlusion-aware augmentation, and visibility-aware training. The implementation gradually developed into a bidirectional gated recurrent unit (BiGRU) temporal refiner using 31-frame windows.
+The original two-person course project focused on bat endpoint localization, especially the tail, under occlusion and unstable detections. Early work explored temporal information, optical flow, and occlusion-aware augmentation. The implementation gradually developed into a bidirectional gated recurrent unit (BiGRU) temporal refiner using 31-frame windows.
 
 After the course project, I audited the feature pipeline and rebuilt it using only information available at inference time. In the later reconstruction, I tested whether temporal context actually reduced detector errors and whether RAFT added useful information beyond coordinate-based motion.
 
@@ -31,7 +31,7 @@ flowchart TB
 
 The BiGRU uses past and future frames, so this is an **offline** method.
 
-To get more training motion data, I used the [OpenBiomechanics Project (OBP) — Baseball Hitting](https://github.com/drivelineresearch/openbiomechanics) dataset from Driveline Baseball R&D. I projected the 3D bat trajectories into different 2D camera views, added detector-like noise and missing observations, and used these sequences to pretrain the temporal model before fine-tuning on real detector outputs.
+To get more training motion data, I used 3D baseball-hitting motion-capture data from the[OpenBiomechanics Project (OBP) — Baseball Hitting](https://github.com/drivelineresearch/openbiomechanics) dataset from Driveline Baseball R&D. I projected the 3D bat trajectories into different 2D camera views, added detector-like noise and missing observations, and used these sequences to pretrain the temporal model before fine-tuning on real detector outputs.
 
 Training also used auxiliary losses related to bat geometry and temporal consistency. More details are in [METHOD.md](docs/METHOD.md).
 
