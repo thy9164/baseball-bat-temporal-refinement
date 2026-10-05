@@ -4,19 +4,19 @@
 
 Locating the head and tail of a fast-moving bat is a difficult part of baseball swing analysis. A frame-wise detector works well on many frames, but occasional misses and large endpoint errors make the trajectory unreliable.
 
-The original two-person course project focused on bat endpoint localization, especially the tail, under occlusion and unstable detections. Early work explored temporal information, optical flow, occlusion-aware augmentation, and visibility-aware training. The implementation gradually developed into a BiGRU temporal refiner using 31-frame windows.
+The original two-person course project focused on bat endpoint localization, especially the tail, under occlusion and unstable detections. Early work explored temporal information, optical flow, occlusion-aware augmentation, and visibility-aware training. The implementation gradually developed into a bidirectional gated recurrent unit (BiGRU) temporal refiner using 31-frame windows.
 
 After the course project, I audited the feature pipeline and rebuilt it using only information available at inference time. In the later reconstruction, I tested whether temporal context actually reduced detector errors and whether RAFT added useful information beyond coordinate-based motion.
 
-Temporal refinement mainly helped with large detector errors. RMSE improved, while PCK changed only slightly. Adding flow made little additional difference.
+Temporal refinement mainly reduced large detector errors, while threshold-based accuracy improved only slightly. Adding optical flow made little additional difference.
 
 ## Method Overview
 
 ```mermaid
 flowchart LR
     V[Video frames] --> D[YOLOv8s-pose]
-    D --> S[Deterministic candidate selection]
-    S --> O[Clean observation builder]
+    D --> S[Candidate selection]
+    S --> O[Detector-based temporal features]
     O --> N[25D no-flow features]
     N --> B[2-layer BiGRU]
     B --> R[Prior + residual + learned trust]
@@ -37,41 +37,42 @@ Training also used auxiliary losses related to bat geometry and temporal consist
 
 ## Dataset
 
-The dataset contains 79 swing videos, with a bat bounding box, two labeled keypoints—bat head and bat tail—and endpoint visibility/status labels.
+The dataset contains 79 swing videos annotated with bat bounding boxes, head/tail keypoints, and endpoint visibility labels.
 
-The final `my_split_v2` split keeps swings separate:
+Train, validation, and test sets are split by swing to avoid sequence overlap:
 
-| Split | Swings | Frames | Role |
-|---|---:|---:|---|
-| Train | 53 | 4,201 | Optimization |
-| Validation | 11 | 646 | Checkpoint selection and early stopping |
-| Test | 15 | 875 | One-shot final evaluation |
+| Split | Swings | Frames
+|---|---:|---|
+| Train | 53 | 4,201 |
+| Validation | 11 | 646 |
+| Test | 15 | 875 |
 
 Training uses three-fold out-of-fold detector predictions. Validation alone selects the checkpoint; test data is used for the final evaluation.
 
 The original source videos, private annotations, detector/flow exports, OBP C3D and derived trajectory datasets, and model weights are not included. The examples below use self-recorded footage shared with permission.
 
-## Final results
+## Results
 
 The table compares tail localization on the same 840 test frames where valid ground truth and detector predictions were available. The baseline is the frame-wise detector **after deterministic candidate selection**, rather than raw YOLO rank-1 output.
 
-The table uses the same 840 frames for all three methods so that their localization errors can be compared directly. PCK-Swing measures error relative to the bat's projected length, which makes the threshold less dependent on image scale.
+The table uses the same 840 frames for all three methods so that their localization errors can be compared directly.
 
-Metrics: RMSE, mean, median, and P90 report tail error in pixels. PCK@2.5 and PCK@5 report the percentage of predictions within 2.5% and 5% of the swing-specific bat-length scale. AUC summarizes PCK across thresholds from 0% to 10%.
+Metrics:
+RMSE, mean, median, and P90 measure tail error in pixels; lower is better. PCK measures how often tail error stays within a fraction of each swing’s reference bat length—5% for PCK@5 and 2.5% for PCK@2.5. AUC summarizes PCK across thresholds from 0% to 10%; higher is better.
 
 | Pipeline | RMSE ↓ | Mean error ↓ | Median ↓ | P90 ↓ | PCK@2.5 ↑ | PCK@5 ↑ | AUC [0, 10%] ↑ |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Frame-wise detector after deterministic candidate selection | 19.956 px | 11.590 px | 6.094 px | 29.290 px | 67.26% | 82.62% | 0.7250 |
-| Strict-clean temporal refinement, no flow | **17.278 px** | **10.714 px** | **5.821 px** | **26.671 px** | 68.33% | **83.33%** | 0.7346 |
-| Strict-clean temporal refinement + RAFT20 | **17.177 px** | **10.684 px** | 5.951 px | **26.503 px** | **68.45%** | **83.33%** | **0.7350** |
+| Temporal refinement, no optical flow | **17.278 px** | **10.714 px** | **5.821 px** | **26.671 px** | 68.33% | **83.33%** | 0.7346 |
+| Temporal refinement + RAFT optical flow | **17.177 px** | **10.684 px** | 5.951 px | **26.503 px** | **68.45%** | **83.33%** | **0.7350** |
 
 No-flow refinement reduced RMSE by **13.42%**, mean error by **7.56%**, and P90 by **8.94%**. PCK gains were smaller: +1.07 percentage points at 2.5% and +0.71 at 5%.
 
 The largest improvements came from severe detector errors. Predictions already within 5 px became slightly worse on average. The model behaved mainly as a **temporal outlier corrector**, with benefits and regressions across frames.
 
-RAFT20 added only about **0.58%** RMSE reduction beyond no-flow, increased PCK@2.5 by 0.12 percentage points, and left PCK@5 unchanged.
+Adding RAFT optical-flow features reduced RMSE by only another 0.58%, increased PCK@2.5 by 0.12 percentage points, and left PCK@5 unchanged.
 
-The runs use **one seed**; no statistical significance is claimed. Aggregate values are saved in [final_metrics.json](results/final_metrics.json). The final table uses only the rebuilt clean-input experiments.
+Detailed aggregate metrics are available in [final_metrics.json](results/final_metrics.json).
 
 ## Examples
 
@@ -79,20 +80,20 @@ The runs use **one seed**; no statistical significance is claimed. Aggregate val
 
 ![Frame-wise selected detector versus no-flow temporal refinement](docs/demo_assets/swing074_detector_vs_temporal.gif)
 
-The animation covers frames 18–30, comparing the frame-wise selected detector with no-flow temporal refinement.
+The animation compares the frame-wise detector with temporal refinement over a representative swing segment.
 
-The example image at the top shows `swing_074`, frame 23: tail error decreases from **13.1 px → 3.2 px** with no-flow refinement.
+In the representative improvement example, tail error decreases from **13.1 px → 3.2 px** with no-flow refinement.
 
-- [Higher-quality short MP4](docs/demo_assets/swing074_detector_vs_temporal.mp4): frames 18–30, focused on the representative segment.
-- [Full-swing comparison video](docs/demo_assets/swing074_full_swing_comparison.mp4): frames 1–63, showing the complete motion.
+- [Higher-quality short MP4](docs/demo_assets/swing074_detector_vs_temporal.mp4)
+- [Full-swing comparison video](docs/demo_assets/swing074_full_swing_comparison.mp4)
 
 Both use the same fixed crop and saved predictions. Playback speed is chosen for presentation; it is not capture speed or inference throughput.
 
-### Limitation
+### Limitation example
 
 ![Temporal refinement can also worsen a detector estimate](docs/demo_assets/swing076_limitation.png)
 
-In `swing_076`, frame 43, tail error increases from **11.2 px → 17.8 px**. Refinement does not improve every estimate.
+In this limitation example, tail error increases from **11.2 px → 17.8 px**. Refinement does not improve every estimate.
 
 These are qualitative examples. The aggregate 15-swing evaluation is the basis for the performance results.
 
@@ -102,27 +103,15 @@ I primarily worked on the YOLO pipeline, dataset preparation and splits, synthet
 
 My project teammate trained the HRNet baseline and contributed to annotation, poster preparation, and result organization.
 
-## Installation and verification
+## Verification
 
-Requirements are split by task; install only the groups you need:
-
+The core implementation has been validated with the included tests:
 ```bash
-python -m pip install -r requirements.txt             # core
-python -m pip install -r requirements-dev.txt         # tests
-python -m pip install -r requirements-synthetic.txt   # optional C3D preprocessing
-python -m pip install -r requirements-flow.txt        # optional RAFT
-python -m pip install -r requirements-demo.txt        # optional demo rendering
-```
-
-Run the public tests from the repository root:
-
-```bash
+python -m pip install -r requirements-dev.txt
 python -m pytest
 ```
-
-The public test suite passes in the verified Python 3.11 clean-validation environment (38/38 tests).
-
-This validates the core code; reproducing the full training pipeline still requires external datasets and project-specific inputs.
+The current public suite passes 38/38 tests in the verified Python 3.11 environment.
+Optional dependencies for synthetic preprocessing, optical flow, and demo rendering are documented in [Dependencies](docs/DEPENDENCIES.md).
 
 ## Limitations
 
